@@ -35,7 +35,13 @@ public class UsersManagerService {
                 throw new RuntimeException("You can't delete your own account");
             }
         }
-        userRepository.deleteByUsername(username);
+
+        if (checkAccess(OperationType.D, "USER")) {
+            userRepository.deleteByUsername(username);
+        } else {
+            throw new RuntimeException("You don't have permission to delete this user");
+        }
+        
     }
 
     public UserRegistrationResponse register(UserRegistrationRequest request) {

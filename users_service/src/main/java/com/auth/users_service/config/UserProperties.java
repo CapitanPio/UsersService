@@ -13,7 +13,6 @@ public class UserProperties {
 
 
     private boolean canDeleteOwnAccount;
-    private boolean usingRoles;
 
     @lombok.Data
     public static class Username {
