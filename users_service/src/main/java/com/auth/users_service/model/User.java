@@ -8,6 +8,7 @@ import jakarta.persistence.Table;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.GrantedAuthority;
 import java.util.Collection;
+import java.util.Collections;
 
 
 
@@ -34,8 +35,7 @@ public class User implements UserDetails {
     }
 
     public Collection<? extends GrantedAuthority> getAuthorities() {
-        // Implement in the future
-        return null;
+        return Collections.emptyList();
     }
 
     public boolean isAccountNonExpired() {
@@ -54,7 +54,4 @@ public class User implements UserDetails {
         return true;
     }
 
-    public UserDetails getUserDetails() {
-        return this;
-    }
 }

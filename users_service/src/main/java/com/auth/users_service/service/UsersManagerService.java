@@ -5,14 +5,14 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import com.auth.users_service.repository.UserRepository;
 import com.auth.users_service.dto.UserRegistrationRequest;
-import com.auth.users_service.dto.UserRegistrationResponse;
 import com.auth.users_service.model.User;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
 import com.auth.users_service.config.UserProperties;
-import com.auth.users_service.dto.ChangePasswordResponse;
+import com.auth.users_service.dto.ChangePasswordRequest;
+import com.auth.users_service.dto.EditUserRequest;
+import com.auth.users_service.dto.UserDTO;
 import com.auth.users_service.utils.JwtUtils;
-
 
 @Service
 @lombok.RequiredArgsConstructor
@@ -23,8 +23,11 @@ public class UsersManagerService {
     private final JwtUtils jwtUtils;
     private final UserProperties userProperties;
     
-    public List<User> getAllUsers() {
-        return userRepository.findAll();
+    public List<UserDTO> getAllUsers() {
+        return userRepository.findAll()
+            .stream()
+            .map(u -> new UserDTO(u.getId(), u.getUsername(), u.getEmail()))
+            .toList();
     }
 
     public void deleteUser(String username) {
@@ -35,17 +38,10 @@ public class UsersManagerService {
                 throw new RuntimeException("You can't delete your own account");
             }
         }
-
-        if (checkAccess(OperationType.D, "USER")) {
-            userRepository.deleteByUsername(username);
-        } else {
-            throw new RuntimeException("You don't have permission to delete this user");
-        }
-        
+        userRepository.deleteByUsername(username);
     }
 
-    public UserRegistrationResponse register(UserRegistrationRequest request) {
-        // Here you would add logic to save the user to a database, hash the password, etc.
+    public String register(UserRegistrationRequest request) {
         User user = new User(request.getUsername(), request.getEmail(), passwordEncoder.encode(request.getPassword()));
         User existingUser = userRepository.findByUsername(request.getUsername());
         if (existingUser != null) {
@@ -62,15 +58,11 @@ public class UsersManagerService {
         System.out.println("Registering user with username: " + request.getUsername());
 
 
-        return new UserRegistrationResponse(user.getUsername());
+        return user.getUsername();
     }
 
-    public ChangePasswordResponse changePassword(String oldPassword, String newPassword) {
-        String username = SecurityContextHolder.getContext().getAuthentication().getName();
-        User user = userRepository.findByUsername(username);
-        if (user == null) {
-            throw new RuntimeException("User not found");
-        }
+
+    private User validatePassword(String oldPassword, String newPassword, User user) {
         if (!passwordEncoder.matches(oldPassword, user.getPassword())) {
             throw new RuntimeException("Old password is incorrect");
         }
@@ -81,11 +73,64 @@ public class UsersManagerService {
 
         user.setTokenVersion(user.getTokenVersion()+1);
 
+        return user;
+
+    }
+
+    public String changePassword(ChangePasswordRequest request) {
+        String username;
+        if (request.getUsername() == null) {
+            username = SecurityContextHolder.getContext().getAuthentication().getName();
+        } else {
+            username = request.getUsername();
+        }
+        
+        User user = userRepository.findByUsername(username);
+        if (user == null) {
+            throw new RuntimeException("User not found");
+        }
+
+        user = validatePassword(request.getOldPassword(), request.getNewPassword(), user);
+
         String token = jwtUtils.generateToken(user);
 
         userRepository.save(user);
 
         System.out.println("Password changed for user: " + username);
-        return new ChangePasswordResponse(token);
+        return token;
     }
+
+    public String updateUser(Long id, EditUserRequest request) {
+
+        User user = userRepository.findById(id).orElseThrow(() -> new RuntimeException("User not found"));
+
+        User UserFoundByUsername = userRepository.findByUsername(request.getUsername());
+
+        if (UserFoundByUsername != null && !UserFoundByUsername.getId().equals(id)) {
+            throw new RuntimeException("Username already exists");
+        }
+        
+        User UserFoundByEmail = userRepository.findByEmail(request.getEmail());
+        if (UserFoundByEmail != null && !UserFoundByEmail.getId().equals(id)) {
+            throw new RuntimeException("Email already exists");
+        }
+
+        if (request.getOldPassword() != null && request.getNewPassword() != null) {
+            user = validatePassword(request.getOldPassword(), request.getNewPassword(), user);
+            user.setUsername(request.getUsername());
+            user.setEmail(request.getEmail());
+            userRepository.save(user);
+        }
+        else if (request.getOldPassword() != null || request.getNewPassword() != null) {
+            throw new RuntimeException("Both old and new passwords must be provided");
+        }
+        else {
+            user.setUsername(request.getUsername());
+            user.setEmail(request.getEmail());
+            userRepository.save(user); // no password change, just save username/email
+        }
+        
+        return jwtUtils.generateToken(user);
+    }
+
 }

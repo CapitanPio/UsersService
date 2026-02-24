@@ -2,16 +2,21 @@
 
 import {login} from '@/api/users_service_queries'
 import { ref } from 'vue'
+import { useRouter } from 'vue-router'
 
 const username = ref('')
 const password = ref('')
 
+const router = useRouter()
+
 const handleLogin = async () => {
   const response = await login(username.value, password.value)
   if (response.status === 200) {
-    const data = await response.json()
+    const data = response.data
     localStorage.setItem('token', data.token)
-    window.location.href = '/dashboard'
+    localStorage.setItem('username', username.value)
+    console.log('Login successful. Token:', data.token)
+    router.push('/usersManager')
   } else {
     alert('Login failed')
   }

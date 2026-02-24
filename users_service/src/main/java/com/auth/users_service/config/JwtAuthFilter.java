@@ -8,19 +8,21 @@ import java.io.IOException;
 
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 import com.auth.users_service.utils.JwtUtils;
 import com.auth.users_service.model.User;
 
+import com.auth.users_service.repository.UserRepository;
+
+
 
 @Component
 @lombok.RequiredArgsConstructor
 public class JwtAuthFilter extends OncePerRequestFilter {
 
-    private final UserDetailsService  userDetailsService ;
+    private final UserRepository userRepository;
     private final JwtUtils jwtUtils;
 
     @Override
@@ -30,26 +32,40 @@ public class JwtAuthFilter extends OncePerRequestFilter {
         if (authHeader != null && authHeader.startsWith("Bearer ")) {
             String token = authHeader.substring(7);
 
-            if (jwtUtils.isTokenValid(token)){
-                String username = jwtUtils.extractUsername(token);
-                User user = (User) userDetailsService.loadUserByUsername(username);
-
-                if (jwtUtils.extractTokenVersion(token) != user.getTokenVersion()) {
+            try {
+                if (!jwtUtils.isTokenValid(token)) {
                     filterChain.doFilter(request, response);
                     return;
                 }
 
+                String username = jwtUtils.extractUsername(token);
+                User user = userRepository.findByUsername(username);
+                if (user == null) {
+                    sendError(response, "User not found");
+                    return;
+                }
 
-                UsernamePasswordAuthenticationToken authToken = 
+                if (jwtUtils.extractTokenVersion(token) != user.getTokenVersion()) {
+                    sendError(response, "Token has been invalidated");
+                    return;
+                }
+
+                UsernamePasswordAuthenticationToken authToken =
                     new UsernamePasswordAuthenticationToken(user, null, user.getAuthorities());
-            
                 authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
                 SecurityContextHolder.getContext().setAuthentication(authToken);
 
+            } catch (Exception e) {
+                sendError(response, "Authentication error: " + e.getMessage());
+                return;
             }
         }
 
         filterChain.doFilter(request, response); // Continue with the filter chain
     }
-    
+
+    private void sendError(HttpServletResponse response, String message) throws IOException {
+        response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+        response.getWriter().write(message);
+    }
 }

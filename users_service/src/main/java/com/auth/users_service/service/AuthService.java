@@ -7,7 +7,6 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import com.auth.users_service.utils.JwtUtils;
 
-import com.auth.users_service.dto.AuthResponse;
 
 
 @Service
@@ -26,7 +25,7 @@ public class AuthService {
     }
 
 
-    public AuthResponse login(String username, String password) {
+    public String login(String username, String password) {
         User existingUser = userRepository.findByUsername(username);
         if (existingUser == null) {
             throw new RuntimeException("User not found");
@@ -40,6 +39,6 @@ public class AuthService {
 
         System.out.println("User logged in with username: " + username);
 
-        return new AuthResponse(token);
+        return token;
     }
 }

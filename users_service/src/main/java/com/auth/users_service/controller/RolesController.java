@@ -1,5 +1,21 @@
 package com.auth.users_service.controller;
 
+import java.util.List;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+import com.auth.users_service.dto.CreateRoleRequest;
+import com.auth.users_service.dto.EditRoleRequest;
+import com.auth.users_service.model.Role;
+import com.auth.users_service.service.RolesService;
+
 
 @RestController
 @RequestMapping("/api/auth")
@@ -13,32 +29,32 @@ public class RolesController {
     }
 
     @PostMapping("/roles")
-    public ResponseEntity<CreateRoleResponse> createRole(@RequestBody CreateRoleRequest request) {
-        CreateRoleResponse response = rolesService.createRole(request);
+    public ResponseEntity<Role> createRole(@RequestBody CreateRoleRequest request) {
+        Role response = rolesService.createRole(request);
         return ResponseEntity.ok(response);
     }
 
     @GetMapping("/roles/{name}")
-    public ResponseEntity<ReadRoleResponse> readRole(@PathVariable String name) {
-        ReadRoleResponse response = rolesService.readRole(new ReadRoleRequest(name));
+    public ResponseEntity<Role> readRole(@PathVariable String name) {
+        Role response = rolesService.readRole(name);
         return ResponseEntity.ok(response);
     }
 
     @GetMapping("/roles")
-    public ResponseEntity<List<ReadRoleResponse>> readAllRoles() {
-        List<ReadRoleResponse> response = rolesService.readAllRoles();
+    public ResponseEntity<List<Role>> readAllRoles() {
+        List<Role> response = rolesService.readAllRoles();
         return ResponseEntity.ok(response);
     }
 
     @DeleteMapping("/roles/{name}")
-    public ResponseEntity<DeleteRoleResponse> deleteRole(@PathVariable String name) {
-        DeleteRoleResponse response = rolesService.deleteRole(new DeleteRoleRequest(name));
-        return ResponseEntity.ok(response);
+    public ResponseEntity<Void> deleteRole(@PathVariable String name) {
+        rolesService.deleteRole(name);
+        return ResponseEntity.ok().build();
     }
 
     @PutMapping("/roles")
-    public ResponseEntity<EditRoleResponse> editRole(@RequestBody EditRoleRequest request) {
-        EditRoleResponse response = rolesService.editRole(request);
+    public ResponseEntity<Role> editRole(@RequestBody EditRoleRequest request) {
+        Role response = rolesService.editRole(request);
         return ResponseEntity.ok(response);
     }
     

@@ -9,14 +9,13 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 
 import com.auth.users_service.dto.UserRegistrationRequest;
-import com.auth.users_service.dto.UserRegistrationResponse;
-import com.auth.users_service.dto.AuthResponse;
 import com.auth.users_service.dto.LoginRequest;
 import com.auth.users_service.dto.ChangePasswordRequest;
-import com.auth.users_service.dto.ChangePasswordResponse;
+import com.auth.users_service.dto.EditUserRequest;
 import com.auth.users_service.service.AuthService;
 import com.auth.users_service.service.UsersManagerService;
 
@@ -51,14 +50,12 @@ public class AuthController {
             return ResponseEntity.badRequest().body(errors);
         }
         try {
-            UserRegistrationResponse response = usersManagerService.register(request);
-            return ResponseEntity.ok("User registered successfully: " + response.getUsername());
+            String username = usersManagerService.register(request);
+            return ResponseEntity.ok("User registered successfully: " + username);
         } catch (RuntimeException e) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of("error", e.getMessage()));
         }
     }
-
-
 
     @PostMapping("/login")
     public ResponseEntity<Object> login(@Valid @RequestBody LoginRequest request, BindingResult bindingResult) {
@@ -70,18 +67,18 @@ public class AuthController {
         System.out.println("Login endpoint hitted with username: " + request.getUsername());
 
         try {
-            AuthResponse response = authService.login(request.getUsername(), request.getPassword());
-            return ResponseEntity.ok("User logged in successfully. Token: " + response.getToken());
+            String token = authService.login(request.getUsername(), request.getPassword());
+            return ResponseEntity.ok(Map.of("token", token));
         } catch (RuntimeException e) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Error: " + e.getMessage());
         }
     }
 
     @GetMapping("/users")
-    public ResponseEntity<String> getUsers() {
+    public ResponseEntity<Object> getUsers() {
     System.out.println("Get users endpoint hitted");
         try{
-            return ResponseEntity.ok(usersManagerService.getAllUsers().toString());
+            return ResponseEntity.ok(usersManagerService.getAllUsers());
         } catch (RuntimeException e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error: " + e.getMessage());
         }
@@ -89,7 +86,7 @@ public class AuthController {
     }
 
     @DeleteMapping("/users/{username}")
-    public ResponseEntity<String> deleteUser(@PathVariable String username) {
+    public ResponseEntity<Object> deleteUser(@PathVariable String username) {
         try {
             usersManagerService.deleteUser(username);
             return ResponseEntity.ok("User deleted successfully");
@@ -99,16 +96,34 @@ public class AuthController {
     }
 
     @PostMapping("/change-password")
-    public ResponseEntity<String> changePassword(@RequestBody ChangePasswordRequest request) {
+    public ResponseEntity<Object> changePassword(@Valid @RequestBody ChangePasswordRequest request,
+                                                                        BindingResult bindingResult){
+
+        if (bindingResult.hasErrors()) {
+            Map<String, String> errors = new HashMap<>();
+            bindingResult.getFieldErrors().forEach(e -> errors.put(e.getField(), e.getDefaultMessage()));
+            return ResponseEntity.badRequest().body(errors);
+        }
 
         try {
-            ChangePasswordResponse response = usersManagerService.changePassword(request.getOldPassword(), request.getNewPassword());
+            String token = usersManagerService.changePassword(request);
 
-            return ResponseEntity.ok("Password changed successfully: "+ response.getToken());
+            return ResponseEntity.ok("Password changed successfully: "+ token);
         } catch (RuntimeException e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error: " + e.getMessage());
         }
     }
+
+    @PutMapping("/update/{id}")
+    public ResponseEntity<Object> updateUser(@PathVariable Long id, @RequestBody EditUserRequest request) {
+        try{
+            String token = usersManagerService.updateUser(id, request);
+            return ResponseEntity.ok(Map.of("token", token));
+        } catch (RuntimeException e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error: " + e.getMessage());
+        }
+    }
+    
     
     
 }
