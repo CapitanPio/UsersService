@@ -8,9 +8,9 @@ public class CreateRoleRequest {
 
     private String name;
     private List<String> permissions;
-    private boolean createMissingPermissions;
+    private Boolean createMissingPermissions;
 
-    public CreateRoleRequest(String name, List<String> permissions, boolean createMissingPermissions) {
+    public CreateRoleRequest(String name, List<String> permissions, Boolean createMissingPermissions) {
         this.name = name;
         this.permissions = permissions;
         this.createMissingPermissions = createMissingPermissions;

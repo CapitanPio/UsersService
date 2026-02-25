@@ -1,6 +1,7 @@
 package com.auth.users_service.service;
 import java.util.List;
 
+import com.auth.users_service.config.RolesProperties;
 import com.auth.users_service.dto.CreateRoleRequest;
 import com.auth.users_service.model.Permission;
 import com.auth.users_service.model.Role;
@@ -14,9 +15,9 @@ import com.auth.users_service.dto.EditRoleRequest;
 @lombok.RequiredArgsConstructor
 public class RolesService {
 
-
     private final RoleRepository roleRepository;
     private final PermissionRepository permissionsRepository;
+    private final RolesProperties rolesProperties;
 
 
     public Role createRole(CreateRoleRequest request) {
@@ -26,7 +27,7 @@ public class RolesService {
                 .toList());
 
         if (permissions.size() != request.getPermissions().size()) {
-            if (request.isCreateMissingPermissions()) {
+            if (Boolean.TRUE.equals(request.getCreateMissingPermissions())) {
                 List<String> missingPermissions = request.getPermissions().stream()
                         .filter(name -> permissions.stream().noneMatch(p -> p.getName().equals(name)))
                         .toList();
@@ -56,12 +57,19 @@ public class RolesService {
     }
 
     public void deleteRole(String name) {
+        if (name.equals(rolesProperties.getBaseRole())) {
+            throw new RuntimeException("The base role cannot be deleted");
+        }
         roleRepository.deleteByName(name);
-        return;
     }
 
     public Role editRole(EditRoleRequest request) {
         Role role = roleRepository.findByName(request.getName()).orElseThrow(() -> new RuntimeException("Role not found"));
+
+        if (request.getNewName() != null && request.getName().equals(rolesProperties.getBaseRole())) {
+            throw new RuntimeException("The base role cannot be renamed");
+        }
+
         if (request.getNewName() != null) {
             role.setName(request.getNewName());
         }
@@ -71,7 +79,7 @@ public class RolesService {
                     .toList());
 
             if (permissionsToAdd.size() != request.getPermissionsToAdd().size()) {
-                if (request.isCreateMissingPermissions()) {
+                if (Boolean.TRUE.equals(request.getCreateMissingPermissions())) {
                     List<String> missingPermissions = request.getPermissionsToAdd().stream()
                             .filter(name -> permissionsToAdd.stream().noneMatch(p -> p.getName().equals(name)))
                             .toList();

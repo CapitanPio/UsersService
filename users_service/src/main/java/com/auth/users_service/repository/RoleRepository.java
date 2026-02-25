@@ -1,18 +1,14 @@
 package com.auth.users_service.repository;
 
 import com.auth.users_service.model.Role;
-import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.mongodb.repository.MongoRepository;
 import java.util.List;
 import java.util.Optional;
-import jakarta.transaction.Transactional;
 
 
-public interface RoleRepository extends JpaRepository<Role, Long> {
+public interface RoleRepository extends MongoRepository<Role, String> {
     boolean existsByName(String name);
     List<Role> findAll();
-
     Optional<Role> findByName(String name);
-
-    @Transactional
     void deleteByName(String name);
 }

@@ -5,7 +5,6 @@ import org.springframework.stereotype.Service;
 import com.auth.users_service.repository.PermissionRepository;
 import com.auth.users_service.model.Permission;
 import java.util.List;
-import jakarta.transaction.Transactional;
 
 
 @Service
@@ -14,42 +13,38 @@ public class PermissionsService {
 
     private final PermissionRepository permissionRepository;
 
-    public String createPermission(String request) {
+    public Permission createPermission(String request) {
         if (permissionRepository.existsByName(request)) {
             throw new RuntimeException("Permission already exists");
         }
         Permission permission = new Permission(request);
         permissionRepository.save(permission);
-        return permission.getName();
+        return permission;
     }
 
-    public String readPermission(String name) {
+    public Permission readPermission(String name) {
         Permission permission = permissionRepository.findByName(name);
         if (permission == null) {
             throw new RuntimeException("Permission not found");
         }
-        return permission.getName();
+        return permission;
     }
 
-    public List<String> readAllPermissions() {
+    public List<Permission> readAllPermissions() {
         List<Permission> permissions = permissionRepository.findAll();
-        return permissions.stream()
-                .map(Permission::getName)
-                .toList();
+        return permissions;
     }
 
-    @Transactional
-    public String deletePermission(String name) {
-        Permission permission = permissionRepository.findByName(name);
+    public void deletePermission(String id) {
+        Permission permission = permissionRepository.findById(id).orElse(null);
         if (permission == null) {
             throw new RuntimeException("Permission not found");
         }
-        permissionRepository.deleteByName(name);
-        return name;
+        permissionRepository.delete(permission);
     }
 
-    public String editPermission(String oldName, String newName) {
-        Permission permission = permissionRepository.findByName(oldName);
+    public Permission editPermission(String id, String newName) {
+        Permission permission = permissionRepository.findById(id).orElse(null);
         if (permission == null) {
             throw new RuntimeException("Permission not found");
         }
@@ -58,6 +53,6 @@ public class PermissionsService {
         }
         permission.setName(newName);
         permissionRepository.save(permission);
-        return permission.getName();
+        return permission;
     }
 }

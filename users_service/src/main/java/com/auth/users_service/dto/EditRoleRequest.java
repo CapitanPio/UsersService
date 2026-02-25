@@ -9,11 +9,11 @@ public class EditRoleRequest {
     private String name;
     private List<String> permissionsToAdd;
     private List<String> permissionsToRemove;
-    private boolean createMissingPermissions;
+    private Boolean createMissingPermissions;
 
     private String newName;
 
-    public EditRoleRequest(String name, String newName, List<String> permissionsToAdd, List<String> permissionsToRemove, boolean createMissingPermissions) {
+    public EditRoleRequest(String name, String newName, List<String> permissionsToAdd, List<String> permissionsToRemove, Boolean createMissingPermissions) {
         this.name = name;
         this.newName = newName;
         this.permissionsToAdd = permissionsToAdd;

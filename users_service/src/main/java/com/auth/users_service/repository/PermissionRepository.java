@@ -1,17 +1,13 @@
 package com.auth.users_service.repository;
 
 import com.auth.users_service.model.Permission;
-import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.mongodb.repository.MongoRepository;
 import java.util.List;
-import jakarta.transaction.Transactional;
 
 
-public interface PermissionRepository extends JpaRepository<Permission, Long> {
+public interface PermissionRepository extends MongoRepository<Permission, String> {
     boolean existsByName(String name);
     List<Permission> findAll();
     Permission findByName(String name);
-
-    @Transactional
     void deleteByName(String name);
-
 }

@@ -3,23 +3,48 @@
 import {register} from '@/api/users_service_queries'
 import { ref } from 'vue'
 
+
+const registerError = ref('')
 const username = ref('')
 const password = ref('')
 const confirmPassword = ref('')
 const email = ref('')
 const handleRegister = async () => {
-  if (password.value !== confirmPassword.value) {
-    alert('Passwords do not match')
-    return
+  try{
+    registerError.value = ''
+    if (!username.value || !password.value || !email.value) {
+      registerError.value = 'Please fill in all fields'
+      return
+    }
+
+    if (password.value !== confirmPassword.value) {
+      registerError.value = 'Passwords do not match'
+      return
+    }
+
+    else{
+      const response = await register(username.value, email.value, password.value)
+      if (response.status === 200 || response.status === 201) {
+        localStorage.setItem('token', response.data.token)
+        window.location.href = '/'
+      }
+      else {
+        registerError.value = 'Registration failed'
+      }
+    }
+  }catch (e){
+        if (!e.response && e.request) {
+      registerError.value = 'Service unavailable. Please try again later.'
+    } else {
+      const data = e.response?.data
+      if (data && typeof data === 'object') {
+        registerError.value = Object.values(data).join(' | ')
+      } else {
+        registerError.value = data?.error || data || 'Unknown error'
+      }
+    }
   }
-  const response = await register(username.value, email.value, password.value)
-  if (response.status === 200) {
-    const data = await response.json()
-    localStorage.setItem('token', data.token)
-    window.location.href = '/'
-  } else {
-    alert('Registration failed')
-  }
+
 }
 
 </script>
@@ -73,9 +98,13 @@ const handleRegister = async () => {
           </div>
         </div>
 
-        <div class="modal-footer" style="justify-content: center">
+        <div class="modal-footer" style="justify-content: center; flex-direction: column; align-items: center">
           <button type="button" class="btn btn-primary" @click="handleRegister">Register</button>
+          <div v-if="registerError" class="alert alert-danger" role="alert" style="margin-top: 10px; text-align: center">
+            {{ registerError }}
+          </div>
         </div>
+
       </div>
     </div>
   </div>

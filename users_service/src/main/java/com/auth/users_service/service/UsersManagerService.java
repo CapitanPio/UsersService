@@ -4,10 +4,13 @@ import java.util.List;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import com.auth.users_service.repository.UserRepository;
+import com.auth.users_service.repository.RoleRepository;
 import com.auth.users_service.dto.UserRegistrationRequest;
 import com.auth.users_service.model.User;
+import com.auth.users_service.model.Role;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
+import com.auth.users_service.config.RolesProperties;
 import com.auth.users_service.config.UserProperties;
 import com.auth.users_service.dto.ChangePasswordRequest;
 import com.auth.users_service.dto.EditUserRequest;
@@ -17,32 +20,38 @@ import com.auth.users_service.utils.JwtUtils;
 @Service
 @lombok.RequiredArgsConstructor
 public class UsersManagerService {
-    
+
     private final UserRepository userRepository;
+    private final RoleRepository roleRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtUtils jwtUtils;
     private final UserProperties userProperties;
-    
+    private final RolesProperties rolesProperties;
+
     public List<UserDTO> getAllUsers() {
         return userRepository.findAll()
             .stream()
-            .map(u -> new UserDTO(u.getId(), u.getUsername(), u.getEmail()))
+            .map(u -> new UserDTO(u.getId(), u.getUsername(), u.getEmail(), u.getRole() != null ? u.getRole().getName() : null))
             .toList();
     }
 
-    public void deleteUser(String username) {
+    public void deleteUser(String id) {
+        User user = userRepository.findById(id).orElseThrow(() -> new RuntimeException("User not found"));
 
-        if (!userProperties.isCanDeleteOwnAccount()) {  // if NOT allowed
+        if (user.getUsername().equals(rolesProperties.getBaseUsername())) {
+            throw new RuntimeException("The base user cannot be deleted");
+        }
+
+        if (!userProperties.isCanDeleteOwnAccount()) {
             String acting_user = SecurityContextHolder.getContext().getAuthentication().getName();
-            if (acting_user.equals(username)) {
+            if (acting_user.equals(user.getUsername())) {
                 throw new RuntimeException("You can't delete your own account");
             }
         }
-        userRepository.deleteByUsername(username);
+        userRepository.deleteById(id);
     }
 
     public String register(UserRegistrationRequest request) {
-        User user = new User(request.getUsername(), request.getEmail(), passwordEncoder.encode(request.getPassword()));
         User existingUser = userRepository.findByUsername(request.getUsername());
         if (existingUser != null) {
             throw new RuntimeException("Username already exists");
@@ -52,11 +61,18 @@ public class UsersManagerService {
         if (existingEmail != null) {
             throw new RuntimeException("Email already exists");
         }
-        
-        userRepository.save(user);  
+
+        User user = new User(request.getUsername(), request.getEmail(), passwordEncoder.encode(request.getPassword()));
+
+        if (request.getRoleId() != null) {
+            Role role = roleRepository.findById(request.getRoleId())
+                .orElseThrow(() -> new RuntimeException("Role not found"));
+            user.setRole(role);
+        }
+
+        userRepository.save(user);
 
         System.out.println("Registering user with username: " + request.getUsername());
-
 
         return user.getUsername();
     }
@@ -84,7 +100,7 @@ public class UsersManagerService {
         } else {
             username = request.getUsername();
         }
-        
+
         User user = userRepository.findByUsername(username);
         if (user == null) {
             throw new RuntimeException("User not found");
@@ -100,16 +116,20 @@ public class UsersManagerService {
         return token;
     }
 
-    public String updateUser(Long id, EditUserRequest request) {
+    public String updateUser(String id, EditUserRequest request) {
 
         User user = userRepository.findById(id).orElseThrow(() -> new RuntimeException("User not found"));
+
+        if (user.getUsername().equals(rolesProperties.getBaseUsername())) {
+            throw new RuntimeException("The base user cannot be edited");
+        }
 
         User UserFoundByUsername = userRepository.findByUsername(request.getUsername());
 
         if (UserFoundByUsername != null && !UserFoundByUsername.getId().equals(id)) {
             throw new RuntimeException("Username already exists");
         }
-        
+
         User UserFoundByEmail = userRepository.findByEmail(request.getEmail());
         if (UserFoundByEmail != null && !UserFoundByEmail.getId().equals(id)) {
             throw new RuntimeException("Email already exists");
@@ -127,9 +147,9 @@ public class UsersManagerService {
         else {
             user.setUsername(request.getUsername());
             user.setEmail(request.getEmail());
-            userRepository.save(user); // no password change, just save username/email
+            userRepository.save(user);
         }
-        
+
         return jwtUtils.generateToken(user);
     }
 

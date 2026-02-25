@@ -19,6 +19,8 @@ public class UserRegistrationRequest {
     @ValidPassword
     private String password;
 
+    private String roleId;
+
     public UserRegistrationRequest(String username, String email, String password) {
         this.username = username;
         this.email = email;

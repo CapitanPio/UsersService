@@ -85,10 +85,10 @@ public class AuthController {
         
     }
 
-    @DeleteMapping("/users/{username}")
-    public ResponseEntity<Object> deleteUser(@PathVariable String username) {
+    @DeleteMapping("/delete/{id}")
+    public ResponseEntity<Object> deleteUser(@PathVariable String id) {
         try {
-            usersManagerService.deleteUser(username);
+            usersManagerService.deleteUser(id);
             return ResponseEntity.ok("User deleted successfully");
         } catch (RuntimeException e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error: " + e.getMessage());
@@ -115,7 +115,7 @@ public class AuthController {
     }
 
     @PutMapping("/update/{id}")
-    public ResponseEntity<Object> updateUser(@PathVariable Long id, @RequestBody EditUserRequest request) {
+    public ResponseEntity<Object> updateUser(@PathVariable String id, @RequestBody EditUserRequest request) {
         try{
             String token = usersManagerService.updateUser(id, request);
             return ResponseEntity.ok(Map.of("token", token));

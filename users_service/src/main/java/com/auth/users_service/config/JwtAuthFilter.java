@@ -41,7 +41,7 @@ public class JwtAuthFilter extends OncePerRequestFilter {
                 String username = jwtUtils.extractUsername(token);
                 User user = userRepository.findByUsername(username);
                 if (user == null) {
-                    sendError(response, "User not found");
+                    filterChain.doFilter(request, response);
                     return;
                 }
 

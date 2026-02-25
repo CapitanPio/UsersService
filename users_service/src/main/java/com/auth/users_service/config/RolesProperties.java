@@ -12,6 +12,6 @@ public class RolesProperties {
     private Boolean allowed;
     private String baseRole;
 
-    // Users without roles (ignored if you allow roles)
     private String baseUsername;
+    private String basePassword;
 }
