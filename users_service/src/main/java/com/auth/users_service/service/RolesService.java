@@ -7,6 +7,7 @@ import com.auth.users_service.model.Permission;
 import com.auth.users_service.model.Role;
 import com.auth.users_service.repository.PermissionRepository;
 import com.auth.users_service.repository.RoleRepository;
+import com.auth.users_service.repository.UserRepository;
 import org.springframework.stereotype.Service;
 import java.util.ArrayList;
 import com.auth.users_service.dto.EditRoleRequest;
@@ -17,14 +18,28 @@ public class RolesService {
 
     private final RoleRepository roleRepository;
     private final PermissionRepository permissionsRepository;
+    private final UserRepository userRepository;
     private final RolesProperties rolesProperties;
 
 
     public Role createRole(CreateRoleRequest request) {
 
-        List<Permission> permissions = new ArrayList<>(permissionsRepository.findAll().stream()
-                .filter(permission -> request.getPermissions().contains(permission.getName()))
-                .toList());
+        if (roleRepository.existsByName(request.getName())) {
+            throw new RuntimeException("Role already exists");
+        }
+        List<Permission> permissions;
+        if (request.getPermissions() == null) {
+            permissions = new ArrayList<>();
+        } else {
+            try{
+                permissions = new ArrayList<>(permissionsRepository.findAll().stream()
+                        .filter(permission -> request.getPermissions().contains(permission.getName()))
+                        .toList());
+            } catch (RuntimeException e) {
+                throw new RuntimeException("Error fetching permissions");
+            }
+        }   
+
 
         if (permissions.size() != request.getPermissions().size()) {
             if (Boolean.TRUE.equals(request.getCreateMissingPermissions())) {
@@ -60,7 +75,13 @@ public class RolesService {
         if (name.equals(rolesProperties.getBaseRole())) {
             throw new RuntimeException("The base role cannot be deleted");
         }
-        roleRepository.deleteByName(name);
+        Role role = roleRepository.findByName(name).orElseThrow(() -> new RuntimeException("Role not found"));
+        List<com.auth.users_service.model.User> usersWithRole = userRepository.findByRole(role);
+        for (com.auth.users_service.model.User user : usersWithRole) {
+            user.setRole(null);
+            userRepository.save(user);
+        }
+        roleRepository.delete(role);
     }
 
     public Role editRole(EditRoleRequest request) {
@@ -71,6 +92,9 @@ public class RolesService {
         }
 
         if (request.getNewName() != null) {
+            if (roleRepository.existsByName(request.getNewName())) {
+                throw new RuntimeException("Role with that name already exists");
+            }
             role.setName(request.getNewName());
         }
         if (request.getPermissionsToAdd() != null) {

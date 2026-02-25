@@ -11,4 +11,5 @@ public interface RoleRepository extends MongoRepository<Role, String> {
     List<Role> findAll();
     Optional<Role> findByName(String name);
     void deleteByName(String name);
+    List<Role> findByPermissionsContaining(com.auth.users_service.model.Permission permission);
 }

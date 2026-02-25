@@ -10,4 +10,5 @@ public interface UserRepository extends MongoRepository<User, String> {
     User findByEmail(String email);
     List<User> findAll();
     void deleteByUsername(String username);
+    List<User> findByRole(com.auth.users_service.model.Role role);
 }

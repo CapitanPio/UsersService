@@ -15,4 +15,12 @@ public class CreateRoleRequest {
         this.permissions = permissions;
         this.createMissingPermissions = createMissingPermissions;
     }
+
+    public List<String> getPermissions() {
+        if (this.permissions == null) {
+            return List.of();
+        }
+
+        return this.permissions;
+    }
 }

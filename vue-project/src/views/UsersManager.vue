@@ -15,10 +15,14 @@ const selectedUser = ref({
   currentPassword: '',
   newPassword: '',
 })
+const selectedEditRoleId = ref<string | null>(null)
 
 const openEditModal = (user: any) => {
   selectedUser.value = { ...user }
   originalUsername.value = user.username
+  const matchedRole = roles.value.find((r: any) => r.name === user.role)
+  selectedEditRoleId.value = matchedRole ? matchedRole.id : null
+  modalErr.value = ''
   const editModal = bootstrap.Modal.getOrCreateInstance(document.getElementById('editModal')!)
   editModal.show()
 }
@@ -44,6 +48,7 @@ const saveChanges = async () => {
       email: selectedUser.value.email,
       oldPassword: selectedUser.value.currentPassword,
       newPassword: selectedUser.value.newPassword,
+      roleId: selectedEditRoleId.value,
     })
     if (originalUsername.value === localStorage.getItem('username')) {
       localStorage.setItem('token', response.data.token)
@@ -150,6 +155,10 @@ onMounted(async () => {
           <input type="email" class="form-control mb-2" placeholder="Email" v-model="selectedUser.email">
           <input type="password" class="form-control mb-2" placeholder="Current Password" v-model="selectedUser.currentPassword">
           <input type="password" class="form-control mb-2" placeholder="New Password" v-model="selectedUser.newPassword">
+          <select class="form-select mb-2" v-if="roles.length > 0" v-model="selectedEditRoleId">
+            <option :value="null">No role</option>
+            <option v-for="role in roles" :key="role.id" :value="role.id">{{ role.name }}</option>
+          </select>
           <div v-if="modalErr" class="alert alert-danger">{{ modalErr }}</div>
         </div>
         <div class="modal-footer">

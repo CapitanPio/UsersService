@@ -30,7 +30,7 @@ public class JwtUtils {
         SecretKey key = getSigningKey();
 
         String token = Jwts.builder()
-        .subject(user.getUsername())
+        .subject(user.getId())
         .issuedAt(new Date())
         .expiration(new Date((new Date()).getTime() + jwtProperties.getExpiration()))
 
@@ -41,37 +41,17 @@ public class JwtUtils {
         return token;
     }
 
-    public String validateToken(String token, String expected_username) {
-
-
-        try {
-            String username = extractUsername(token);
-
-            if (!username.equals(expected_username)) {
-                throw new RuntimeException("Invalid JWT token: username does not match");
-            }
-
-            return username;
-        } catch (Exception e) {
-            if (e instanceof io.jsonwebtoken.ExpiredJwtException) {
-                throw new RuntimeException("JWT token has expired");
-            } else {
-                throw new RuntimeException("Invalid JWT token");
-            }
-        }
-    }
-
     public boolean isTokenValid(String token) {
 
         try {
-            extractUsername(token);
+            extractId(token);
             return true;
         } catch (Exception e) {
             return false;
         }
     }
 
-    public String extractUsername(String token) {
+    public String extractId(String token) {
         
         SecretKey key = getSigningKey();
 

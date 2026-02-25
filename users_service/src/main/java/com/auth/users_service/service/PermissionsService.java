@@ -3,7 +3,9 @@ package com.auth.users_service.service;
 
 import org.springframework.stereotype.Service;
 import com.auth.users_service.repository.PermissionRepository;
+import com.auth.users_service.repository.RoleRepository;
 import com.auth.users_service.model.Permission;
+import com.auth.users_service.model.Role;
 import java.util.List;
 
 
@@ -12,6 +14,7 @@ import java.util.List;
 public class PermissionsService {
 
     private final PermissionRepository permissionRepository;
+    private final RoleRepository roleRepository;
 
     public Permission createPermission(String request) {
         if (permissionRepository.existsByName(request)) {
@@ -39,6 +42,11 @@ public class PermissionsService {
         Permission permission = permissionRepository.findById(id).orElse(null);
         if (permission == null) {
             throw new RuntimeException("Permission not found");
+        }
+        List<Role> rolesWithPermission = roleRepository.findByPermissionsContaining(permission);
+        for (Role role : rolesWithPermission) {
+            role.getPermissions().removeIf(p -> p.getId().equals(permission.getId()));
+            roleRepository.save(role);
         }
         permissionRepository.delete(permission);
     }

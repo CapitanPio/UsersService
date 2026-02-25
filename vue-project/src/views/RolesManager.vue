@@ -3,6 +3,7 @@
 import { getAllRoles, getAllPermissions, updateRole, createRole, deleteRole } from '@/api/users_service_queries'
 import { ref, onMounted } from 'vue'
 import * as bootstrap from 'bootstrap'
+import { permission } from 'process'
 
 
 const modalErr = ref('')
@@ -75,7 +76,7 @@ const handleCreateRole = async () => {
       registerError.value = 'Please fill in the role name'
       return
     }
-    const response = await createRole({ name: roleNameRegister.value })
+    const response = await createRole({ name: roleNameRegister.value, permissions: selectedPermissions.value })
     if (response.status === 200 || response.status === 201) {
       bootstrap.Modal.getOrCreateInstance(document.getElementById('createRoleModal')!).hide()
       roleNameRegister.value = ''
@@ -196,6 +197,22 @@ onMounted(() => {
             style="margin-bottom: 10px"
             v-model="roleNameRegister"
           />
+          <label class="form-label">Permissions</label>
+          <div style="max-height: 200px; overflow-y: auto; border: 1px solid #dee2e6; border-radius: 4px; padding: 8px;">
+            <div v-if="availablePermissions.length === 0" class="text-muted small">No permissions available</div>
+            <div v-for="permission in availablePermissions" :key="permission.id" class="form-check">
+              <input
+                class="form-check-input"
+                type="checkbox"
+                :id="'perm-' + permission.id"
+                :value="permission.name"
+                v-model="selectedPermissions"
+              >
+              <label class="form-check-label" :for="'perm-' + permission.id">
+                {{ permission.name }}
+              </label>
+            </div>
+          </div>
           <div v-if="registerError" class="alert alert-danger">{{ registerError }}</div>
         </div>
         <div class="modal-footer">

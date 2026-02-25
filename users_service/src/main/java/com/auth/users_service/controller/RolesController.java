@@ -29,9 +29,15 @@ public class RolesController {
     }
 
     @PostMapping("/roles")
-    public ResponseEntity<Role> createRole(@RequestBody CreateRoleRequest request) {
-        Role response = rolesService.createRole(request);
-        return ResponseEntity.ok(response);
+    public ResponseEntity<Object> createRole(@RequestBody CreateRoleRequest request) {
+        try{
+            Role response = rolesService.createRole(request);
+            return ResponseEntity.ok(response);
+        }
+        catch (RuntimeException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
+
     }
 
     @GetMapping("/roles/{name}")
@@ -47,15 +53,24 @@ public class RolesController {
     }
 
     @DeleteMapping("/roles/{name}")
-    public ResponseEntity<Void> deleteRole(@PathVariable String name) {
-        rolesService.deleteRole(name);
-        return ResponseEntity.ok().build();
+    public ResponseEntity<Object> deleteRole(@PathVariable String name) {
+        try{
+            rolesService.deleteRole(name);
+            return ResponseEntity.ok().build();
+        } catch (RuntimeException e) {
+            return ResponseEntity.notFound().build();
+        }
+
     }
 
     @PutMapping("/roles")
-    public ResponseEntity<Role> editRole(@RequestBody EditRoleRequest request) {
-        Role response = rolesService.editRole(request);
-        return ResponseEntity.ok(response);
+    public ResponseEntity<Object> editRole(@RequestBody EditRoleRequest request) {
+        try{
+            Role response = rolesService.editRole(request);
+            return ResponseEntity.ok(response);
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
     }
     
 }

@@ -135,6 +135,14 @@ public class UsersManagerService {
             throw new RuntimeException("Email already exists");
         }
 
+        if (request.getRoleId() != null) {
+            Role role = roleRepository.findById(request.getRoleId())
+                .orElseThrow(() -> new RuntimeException("Role not found"));
+            user.setRole(role);
+        } else {
+            user.setRole(null);
+        }
+
         if (request.getOldPassword() != null && request.getNewPassword() != null) {
             user = validatePassword(request.getOldPassword(), request.getNewPassword(), user);
             user.setUsername(request.getUsername());
