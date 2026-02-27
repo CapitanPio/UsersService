@@ -18,7 +18,7 @@ import com.auth.users_service.service.RolesService;
 
 
 @RestController
-@RequestMapping("/api/auth")
+@RequestMapping("/api")
 @ConditionalOnProperty(prefix = "roles", name = "allowed", havingValue = "true")
 public class RolesController {
     

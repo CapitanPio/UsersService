@@ -18,7 +18,7 @@ import com.auth.users_service.dto.CreatePermissionRequest;
 import java.util.Map;
 
 @RestController
-@RequestMapping("/api/auth")
+@RequestMapping("/api")
 @ConditionalOnProperty(prefix = "roles", name = "allowed", havingValue = "true")
 public class PermissionsController {
     
