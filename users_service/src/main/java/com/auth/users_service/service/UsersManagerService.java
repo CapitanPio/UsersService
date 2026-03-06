@@ -27,6 +27,7 @@ public class UsersManagerService {
     private final JwtUtils jwtUtils;
     private final UserProperties userProperties;
     private final RolesProperties rolesProperties;
+    private final EmailService emailService;
 
     public List<UserDTO> getAllUsers() {
         return userRepository.findAll()
@@ -72,9 +73,21 @@ public class UsersManagerService {
 
         userRepository.save(user);
 
+        emailService.sendVerificationEmail(user.getEmail(), user.getVerificationToken());
+
         System.out.println("Registering user with username: " + request.getUsername());
 
         return user.getUsername();
+    }
+
+    public void verifyUser(String token) {
+        User user = userRepository.findByVerificationToken(token);
+        if (user == null) {
+            throw new RuntimeException("Invalid verification token");
+        }
+        user.setVerified(true);
+        user.setVerificationToken(null);
+        userRepository.save(user);
     }
 
 

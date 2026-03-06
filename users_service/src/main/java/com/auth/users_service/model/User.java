@@ -7,6 +7,7 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.GrantedAuthority;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.UUID;
 
 
 @Document(collection = "users")
@@ -24,12 +25,16 @@ public class User implements UserDetails {
     private String email;
     private String password;
     private Integer tokenVersion;
+    private boolean verified;
+    private String verificationToken;
 
     public User(String username, String email, String password) {
         this.username = username;
         this.email = email;
         this.password = password;
         this.tokenVersion = 0;
+        this.verified = false;
+        this.verificationToken = UUID.randomUUID().toString();
     }
 
     public Collection<? extends GrantedAuthority> getAuthorities() {

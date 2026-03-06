@@ -8,6 +8,7 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestParam;
 
 import com.auth.users_service.dto.UserRegistrationRequest;
 import com.auth.users_service.dto.LoginRequest;
@@ -34,6 +35,16 @@ public class AuthController {
         this.authService = authService;
         this.usersManagerService = usersManagerService;
         this.checkAccessService = checkAccessService;
+    }
+
+    @GetMapping("/verify")
+    public ResponseEntity<Object> verify(@RequestParam String token) {
+        try {
+            usersManagerService.verifyUser(token);
+            return ResponseEntity.ok("Account verified successfully");
+        } catch (RuntimeException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of("error", e.getMessage()));
+        }
     }
 
     @GetMapping("/health")

@@ -34,6 +34,10 @@ public class AuthService {
         if (!passwordEncoder.matches(password, existingUser.getPassword())) {
             throw new RuntimeException("Invalid password");
         }
+
+        if (!existingUser.isVerified()) {
+            throw new RuntimeException("Account not verified. Please check your email.");
+        }
         
         String token = jwtUtils.generateToken(existingUser);
 
